@@ -132,6 +132,7 @@ r_sqrd <- function(real_y, y_hat) {
   return(1-(sum(RSS_vec)/sum(TSS_vec)))
 }
 
+
 lalonde <- data(lalonde)
 lm_lalonde <- lm(re78 ~., data = lalonde)
 lalonde_prediction <- predict(lm_lalonde)
@@ -172,4 +173,35 @@ maze_coefs <- confint(lm(round1 ~ treat_binari, data = mazedata))
 data.frame(bs_coefs_low, bs_coefs_high, maze_coefs[2,1],maze_coefs[2,2])
 
 hist(bs_samples, xlab = "Treatment Effect Mean", ylab = "Frequency", main = "Treatment Effect Mean by Frequency")
+
+#question 5 
+
+library(boot)
+
+foo <- read.csv(url("https://tinyurl.com/yx8tqf3k"))
+set.seed(12345)
+test_set_rows <- sample(1:length(foo$age), 2000, replace =FALSE)
+
+train_foo <- foo[-c(test_set_rows),]
+
+
+foo_lm_simple <- glm(treat ~ education, data = train_foo)
+foo_lm_complex <- glm(treat ~ . + re74*re75, data = train_foo)
+
+ten_cv_estimate_simple <- cv.glm(foo[test_set_rows,],foo_lm_simple, K=10)
+ten_cv_estimate_simple$delta
+
+ten_cv_estimate_complex <- cv.glm(foo[test_set_rows,],foo_lm_complex, K=10)
+ten_cv_estimate_complex$delta
+
+loocv_estimate_simple <- cv.glm(foo[test_set_rows,],foo_lm_simple)
+loocv_estimate_simple$delta
+
+loocv_estimate_complex <- cv.glm(foo[test_set_rows,],foo_lm_complex)
+loocv_estimate_complex$delta
+
+simple_mse <- mean(foo_lm_simple$residuals^2)
+complex_mse <- mean(foo_lm_complex$residuals^2)
+
+table(ten_cv_estimate_simple$delta[1],ten_cv_estimate_complex$delta[1],loocv_estimate_simple$delta[1],loocv_estimate_complex$delta[1],simple_mse,complex_mse)
 
